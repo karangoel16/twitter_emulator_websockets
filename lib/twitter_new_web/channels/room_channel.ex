@@ -4,7 +4,6 @@ defmodule TwitterNewWeb.RoomChannel do
 
   def start_link(args) do
     map=elem(GenServer.call({:global,:Server},{:server,""},:infinity),3)
-    #spawn(fn->IO.inspect {"new values while closed "<>Atom.to_string(args),genvalue(GenServer.call({:global,:Server},{:user,args|>Atom.to_string|>String.to_integer},:infinity),args|>Atom.to_string|>String.to_integer)} end)
     GenServer.start_link(__MODULE__,args,name: {:global,args})
   end
 
@@ -27,19 +26,30 @@ defmodule TwitterNewWeb.RoomChannel do
            tup=GenServer.call({:global,:Server},{msg,name},:infinity)
            tweet=elem(tup,0)
            mentions=elem(tup,1)
+           handle_in("ping",{"Tweets with mentions of "<>Integer.to_string(name), 
+           Enum.map(MapSet.to_list(mentions),fn(x)->
+               Map.get(tweet,x,"")  
+           end)},elem(state,3))
+           '''
           IO.inspect {"Tweets with mentions of "<>Integer.to_string(name), 
               Enum.map(MapSet.to_list(mentions),fn(x)->
                   Map.get(tweet,x,"")  
-              end)
-          }
+              end)}
+              '''
          :hashtags->
            tup=GenServer.call({:global,:Server},{msg,name},:infinity)
            tweet=elem(tup,0)
            hashtags=elem(tup,1)
+           handle_in("ping",{"Tweets with mentions "<>name,
+           Enum.map(Map.get(hashtags,name,MapSet.new)|>MapSet.to_list,fn(x)->
+              Map.get(tweet,x,"")   
+           end)},elem(state,3))
+           '''
            IO.inspect {"Tweets with mentions "<>name,
            Enum.map(Map.get(hashtags,name,MapSet.new)|>MapSet.to_list,fn(x)->
               Map.get(tweet,x,"")   
            end)}
+           '''
       end
       {:noreply,state}
     end
@@ -47,10 +57,11 @@ defmodule TwitterNewWeb.RoomChannel do
       def handle_cast({msg,number,tweet_msg,name},state) do
           case msg do
               :tweet-> 
-                  IO.puts "tweet: from "<> Integer.to_string(name) <>" "<>tweet_msg
+                  handle_in("ping","tweet: from "<> Integer.to_string(name) <>" "<>tweet_msg,elem(state,3))
+                  #handle_in "tweet: from "<> Integer.to_string(name) <>" "<>tweet_msg
                   tweet=elem(state,1)
                   if Map.get(tweet,number) == nil do
-                      #//TODO GenServer.cast({:global,:Counter},{:val,0})
+                      GenServer.cast({:global,:Counter},{:val,0})
                       #this is to increase the value of the tweet in the system
                       #GenServer.cast({:Server,Node.self()},{:user,number,name,0})
                       #this is to add the value of the node in the structure
@@ -74,8 +85,9 @@ defmodule TwitterNewWeb.RoomChannel do
                   tweet=elem(state,1)
                   tweet_msg=Map.get(tweet,number,nil)
                   if tweet_msg != nil do
-                      #//TODOGenServer.cast({:global,:Counter},{:val,0})
-                      IO.puts "RT: from "<>Integer.to_string(name)<>" "<>tweet_msg
+                      GenServer.cast({:global,:Counter},{:val,0})
+                      #IO.puts "RT: from "<>Integer.to_string(name)<>" "<>tweet_msg
+                      handle_in("ping","RT: from "<>Integer.to_string(name)<>" "<>tweet_msg,elem(state,3))
                       GenServer.cast({:global,:Server},{:show,name,tweet_msg,number})
                   end
               :mention->
@@ -103,6 +115,9 @@ defmodule TwitterNewWeb.RoomChannel do
                   tweet=Map.put(tweet,number,tweet_msg)
                   state=Tuple.delete_at(state,1)|>Tuple.insert_at(1,tweet)
                 :socket->
+                  spawn(fn->
+                    handle_in("ping",{"new values while closed "<>Atom.to_string(elem(state,0)),genvalue(GenServer.call({:global,:Server},{:user,elem(state,0)|>Atom.to_string|>String.to_integer},:infinity),elem(state,0)|>Atom.to_string|>String.to_integer)},number)
+                  end)
                   state=Tuple.delete_at(state,3)|>Tuple.insert_at(3,number)
           end        
       {:noreply,state}
@@ -128,10 +143,16 @@ defmodule TwitterNewWeb.RoomChannel do
   # Channels can be used in a request/response fashion
   # by sending replies to requests from the client
   def handle_in("ping", payload, socket1) do
-    IO.inspect payload    
+    #IO.inspect socket1
+    #IO.inspect payload    
     {:reply, {:ok, payload}, socket1}
   end
 
+  def handle_in("server",payload,socket) do
+    #IO.inspect 
+    GenServer.cast({:global,elem(payload,3)|>Integer.to_string|>String.to_atom},payload)
+    {:noreply,socket}
+  end
   # It is also common to receive messages from the client and
   # broadcast to everyone in the current topic (room:lobby).
   def handle_in("shout", payload, socket) do

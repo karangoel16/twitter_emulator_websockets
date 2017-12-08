@@ -12,7 +12,8 @@ defmodule TwitterNew.Application do
       supervisor(TwitterNewWeb.Endpoint, []),
       # Start your own worker by calling: TwitterNew.Worker.start_link(arg1, arg2, arg3)
       # worker(TwitterNew.Worker, [arg1, arg2, arg3]),
-      worker(TwitterNewWeb.RoomChannel.Monitor,[100])
+      worker(TwitterNewWeb.RoomChannel.Monitor,[100]),
+      worker(TwitterNewWeb.RoomChannel.Counter,[100])
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
