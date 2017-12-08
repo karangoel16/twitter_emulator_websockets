@@ -26,7 +26,6 @@ defmodule TwitterNewWeb.RoomChannel.Counter do
                  temp=elem(state,0)+1
                  state=Tuple.delete_at(state,0)|>Tuple.insert_at(0,temp)
             :counter->
-                IO.inspect state
                 user=elem(state,1)
                 user=List.to_tuple(user)|>Tuple.append(elem(state,0)-number)|>Tuple.to_list
                 state=Tuple.delete_at(state,1)|>Tuple.insert_at(1,user)

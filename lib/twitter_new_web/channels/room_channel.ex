@@ -160,6 +160,12 @@ defmodule TwitterNewWeb.RoomChannel do
     {:noreply, socket}
   end
 
+  def handle_in("subscribe",payload,socket) do
+    #IO.inspect socket.id
+    GenServer.cast({:global,socket.id|>Integer.to_string|>String.to_atom},{:subscribe,payload,"",""})
+    GenServer.cast({:global,:Server},{:subscribe,socket.id,payload,0})
+    {:noreply,socket}
+  end
   # Add authorization logic here as required.
   defp authorized?(_payload) do
     true

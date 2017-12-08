@@ -3,7 +3,7 @@ defmodule TwitterNewWeb.RoomChannelTest do
   alias TwitterNewWeb.RoomChannel
 
   @s 1.3
-  @num 500
+  @num 1000
   def cal_const(number_of_nodes) do
     sum=Enum.sum(Enum.map(1..number_of_nodes,fn(x)->:math.pow(1/x,@s) end))
     #IO.puts sum
@@ -11,6 +11,7 @@ defmodule TwitterNewWeb.RoomChannelTest do
   end
   
   setup do
+    #Registering the nodes to the network
     map=%{}
     map=Enum.reduce(1..@num,map,fn(x,map)->        
         {:ok,_,socket}=socket(x, %{user: x})
@@ -25,10 +26,9 @@ defmodule TwitterNewWeb.RoomChannelTest do
     
     IO.puts "Building Subscription list"
     #we have added start to make the messages go on other nodes as well
-    Enum.map(1..1000,fn(x)->
-      val=Enum.take_random(1..1000,(const/:math.pow(x,@s)|>:math.ceil|>round))
-      GenServer.cast({:global,x|>Integer.to_string|>String.to_atom},{:subscribe,val,"",""})
-      GenServer.cast({:global,:Server},{:subscribe,x,val,0})
+    Enum.map(1..@num,fn(x)->
+      val=Enum.take_random(1..@num,(const/:math.pow(x,@s)|>:math.ceil|>round))
+      push Map.get(map,x), "subscribe", val 
     end)
     {:ok, map: map}
   end
@@ -36,7 +36,6 @@ defmodule TwitterNewWeb.RoomChannelTest do
   test "multiple",%{map: map} do
     number_of_tweets=@num|>Integer.to_string
     number_of_node=@num|>Integer.to_string
-    IO.inspect number_of_tweets
     IO.puts "Starting Tweet"
     #sub=elem(GenServer.call({:Server,Node.self()},{:server,""}),2)
     const_no=cal_const(String.to_integer(number_of_tweets))
