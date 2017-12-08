@@ -54,11 +54,14 @@ defmodule TwitterNewWeb.RoomChannelTest do
         new_tweet
       end)
     end)
-    ref=push Map.get(map,1), "ping", %{"msg" => "there"}
-    IO.inspect {"Throughput",GenServer.call({:global,:Counter},{:counter,0})} 
+    loop_end()
+    push Map.get(map,1), "ping", %{"msg" => "there"}
     assert_reply ref, :ok, _
   end
-
+  def loop_end() do
+    IO.inspect {"Throughput",GenServer.call({:global,:Counter},{:counter,0})} 
+    Process.sleep(1000)
+  end
   def random_start_stop(x) do
     Process.sleep(1000)
     if(:rand.uniform(100000)==2) do
