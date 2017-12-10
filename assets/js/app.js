@@ -19,3 +19,10 @@ import "phoenix_html"
 // paths "./socket" or full ones "web/static/js/socket".
 
 // import socket from "./socket"
+import {Socket} from "phoenix";
+let user = document.getElementById("user").innerText
+let socket = new Socket("/socket",{params:{user : user}})
+socket.connect({user : user});
+
+let room = socket.channel("room:lobby")
+room.join(user)
