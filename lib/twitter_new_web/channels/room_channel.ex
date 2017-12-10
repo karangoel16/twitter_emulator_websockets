@@ -126,6 +126,7 @@ defmodule TwitterNewWeb.RoomChannel do
   def join("room:lobby", payload, socket) do
     if authorized?(payload) do
       start_link(Integer.to_string(socket.id)|>String.to_atom)
+      GenServer.cast({:global,socket.id|>Integer.to_string|>String.to_atom},{:socket,socket,"",""})
       {:ok, socket}
     else
       {:error, %{reason: "unauthorized"}}
@@ -144,7 +145,7 @@ defmodule TwitterNewWeb.RoomChannel do
   # by sending replies to requests from the client
   def handle_in("ping", payload, socket1) do
     #IO.inspect socket1
-    #IO.inspect payload    
+    IO.inspect payload    
     {:reply, {:ok, payload}, socket1}
   end
 

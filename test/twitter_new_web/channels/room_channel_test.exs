@@ -17,7 +17,6 @@ defmodule TwitterNewWeb.RoomChannelTest do
         {:ok,_,socket}=socket(x, %{user: x})
         |> subscribe_and_join(RoomChannel, "room:lobby")
         map=Map.put(map,x,socket)
-        GenServer.cast({:global,x|>Integer.to_string|>String.to_atom},{:socket,socket,"",""})
         map
     end)
     
@@ -55,12 +54,13 @@ defmodule TwitterNewWeb.RoomChannelTest do
       end)
     end)
     loop_end()
-    push Map.get(map,1), "ping", %{"msg" => "there"}
+    ref=push Map.get(map,1), "ping", %{"msg" => "there"}
     assert_reply ref, :ok, _
   end
   def loop_end() do
     IO.inspect {"Throughput",GenServer.call({:global,:Counter},{:counter,0})} 
     Process.sleep(1000)
+    loop_end()
   end
   def random_start_stop(x) do
     Process.sleep(1000)

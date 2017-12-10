@@ -2,7 +2,7 @@ defmodule TwitterNewWeb.UserSocket do
   use Phoenix.Socket
 
   ## Channels
-  # channel "room:*", TwitterNewWeb.RoomChannel
+ channel "room:*", TwitterNewWeb.RoomChannel
 
   ## Transports
   transport :websocket, Phoenix.Transports.WebSocket
