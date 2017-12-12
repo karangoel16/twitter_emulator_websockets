@@ -125,8 +125,8 @@ defmodule TwitterNewWeb.RoomChannel do
   
   def join("room:lobby", payload, socket) do
     if authorized?(payload) do
-      start_link(Integer.to_string(socket.id)|>String.to_atom)
-      GenServer.cast({:global,socket.id|>Integer.to_string|>String.to_atom},{:socket,socket,"",""})
+      start_link(socket.id|>String.to_atom)
+      GenServer.cast({:global,socket.id|>String.to_atom},{:socket,socket,"",""})
       {:ok, socket}
     else
       {:error, %{reason: "unauthorized"}}
@@ -150,25 +150,31 @@ defmodule TwitterNewWeb.RoomChannel do
   end
 
   def handle_in("server",payload,socket) do
-    #IO.inspect 
     GenServer.cast({:global,elem(payload,3)|>Integer.to_string|>String.to_atom},payload)
     {:noreply,socket}
   end
+
   # It is also common to receive messages from the client and
   # broadcast to everyone in the current topic (room:lobby).
   def handle_in("shout", payload, socket) do
+    payload=Map.put(payload,"user",socket.id)
     broadcast socket, "shout", payload
     {:noreply, socket}
   end
 
   def handle_in("subscribe",payload,socket) do
     #IO.inspect socket.id
-    GenServer.cast({:global,socket.id|>Integer.to_string|>String.to_atom},{:subscribe,payload,"",""})
-    GenServer.cast({:global,:Server},{:subscribe,socket.id,payload,0})
+    GenServer.cast({:global,socket.id|>String.to_atom},{:subscribe,payload,"",""})
+    GenServer.cast({:global,:Server},{:subscribe,socket.id|>String.to_integer,payload,0})
     {:noreply,socket}
   end
   # Add authorization logic here as required.
   defp authorized?(_payload) do
     true
   end
+
+  def terminate(reason, _socket) do
+    :ok
+  end
+
 end

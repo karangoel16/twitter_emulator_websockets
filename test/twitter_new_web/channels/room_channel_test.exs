@@ -14,9 +14,10 @@ defmodule TwitterNewWeb.RoomChannelTest do
     #Registering the nodes to the network
     map=%{}
     map=Enum.reduce(1..@num,map,fn(x,map)->        
-        {:ok,_,socket}=socket(x, %{user: x})
-        |> subscribe_and_join(RoomChannel, "room:lobby")
+        {:ok,socket}=connect(TwitterNewWeb.UserSocket, %{user: x|>Integer.to_string})
+        {:ok,_,socket}=subscribe_and_join(socket, "room:lobby",%{})
         map=Map.put(map,x,socket)
+        
         map
     end)
     

@@ -1,5 +1,5 @@
 defmodule TwitterNewWeb.RoomChannel.Counter do
-        use GenServer
+    use GenServer
 
     def start_link(args) do
         GenServer.start_link(__MODULE__,args,name: {:global,:Counter})

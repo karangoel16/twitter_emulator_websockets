@@ -19,8 +19,9 @@ defmodule TwitterNewWeb.UserSocket do
   #
   # See `Phoenix.Token` documentation for examples in
   # performing token verification on connect.
-  def connect(_params, socket) do
-    {:ok, socket}
+  def connect(params, socket) do
+    #IO.inspect params
+    {:ok, assign(socket,:user, params["user"])}
   end
 
   # Socket id's are topics that allow you to identify all sockets for a given user:
@@ -33,5 +34,5 @@ defmodule TwitterNewWeb.UserSocket do
   #     TwitterNewWeb.Endpoint.broadcast("user_socket:#{user.id}", "disconnect", %{})
   #
   # Returning `nil` makes this socket anonymous.
-  def id(socket), do: "user_socket:#{socket.assigns.user}"
+  def id(socket), do: socket.assigns.user
 end
