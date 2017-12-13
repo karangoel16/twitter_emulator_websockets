@@ -40,7 +40,7 @@ defmodule TwitterNewWeb.RoomChannel do
            tup=GenServer.call({:global,:Server},{msg,name},:infinity)
            tweet=elem(tup,0)
            hashtags=elem(tup,1)
-           handle_in("ping",{"Tweets with mentions "<>name,
+           handle_in("ping",{"Tweets with hashtags "<>name,
            Enum.map(Map.get(hashtags,name,MapSet.new)|>MapSet.to_list,fn(x)->
               Map.get(tweet,x,"")   
            end)},elem(state,3))
@@ -105,11 +105,14 @@ defmodule TwitterNewWeb.RoomChannel do
                   end
                   if :rand.uniform(100)==3 do
                       map=SocialParser.extract(tweet_msg,[:hashtags,:mentions])
-                      GenServer.cast({:global,name|>Integer.to_string|>String.to_atom},{:hashtags,List.first(Map.get(map,:hashtags,[]))})
+                      payload=List.first(Map.get(map,:hashtags,[]))
+                      #GenServer.cast({:global,name|>Integer.to_string|>String.to_atom},{:hashtags,})
+                      handle_in("hashtags",payload,elem(state,3))
                   end
                   if :rand.uniform(100)==3 do
                       map=SocialParser.extract(tweet_msg,[:hashtags,:mentions])
-                      GenServer.cast({:global,name|>Integer.to_string|>String.to_atom},{:mentions,List.first(Map.get(map,:mentions,[]))|>String.replace_prefix("@","")|>String.to_integer})
+                      payload=List.first(Map.get(map,:mentions,[]))|>String.replace_prefix("@","")|>String.to_integer
+                      handle_in("mentions",payload,elem(state,3))
                   end
                   tweet=elem(state,1)
                   tweet=Map.put(tweet,number,tweet_msg)
@@ -154,10 +157,18 @@ defmodule TwitterNewWeb.RoomChannel do
     {:noreply,socket}
   end
 
+  def handle_in("mentions",payload,socket) do
+    GenServer.cast({:global,socket.id|>String.to_atom},{:mentions,payload})
+    {:noreply,socket}
+  end
+
+  def handle_in("hashtags",payload,socket) do
+    GenServer.cast({:global,socket.id|>String.to_atom},{:hashtags,payload})
+    {:noreply,socket}
+  end
   # It is also common to receive messages from the client and
   # broadcast to everyone in the current topic (room:lobby).
   def handle_in("shout", payload, socket) do
-    payload=Map.put(payload,"user",socket.id)
     broadcast socket, "shout", payload
     {:noreply, socket}
   end
@@ -168,6 +179,7 @@ defmodule TwitterNewWeb.RoomChannel do
     GenServer.cast({:global,:Server},{:subscribe,socket.id|>String.to_integer,payload,0})
     {:noreply,socket}
   end
+
   # Add authorization logic here as required.
   defp authorized?(_payload) do
     true
